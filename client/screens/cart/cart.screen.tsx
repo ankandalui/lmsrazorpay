@@ -119,7 +119,6 @@ export default function CartScreen() {
   //     console.error(error);
   //   }
   // };
-
   const handlePayment = async () => {
     try {
       const accessToken = await AsyncStorage.getItem("access_token");
@@ -143,7 +142,7 @@ export default function CartScreen() {
 
       const options = {
         description: 'Order Payment',
-        image: 'https://your_logo_url',
+        image: 'https://solvit-test-deploy.vercel.app/_next/image?url=%2F_next%2Fstatic%2Fmedia%2Fbanner-img-1.5a8bcf67.png&w=640&q=75', // Optional: You can provide a logo URL
         currency: 'INR',
         key: 'rzp_test_N4obyVtvC7EiSq', // Replace with your actual Razorpay Key ID
         amount: orderAmount,
@@ -157,15 +156,16 @@ export default function CartScreen() {
       };
 
       if (RazorpayCheckout) {
-        RazorpayCheckout.open(options as any)
-          .then(async (data: any) => {
-            await createOrder(data);
-            alert(`Success: ${data.razorpay_payment_id}`);
-          })
-          .catch((error: any) => {
-            alert(`Error: ${error.code} | ${error.description}`);
-            console.error(error);
-          });
+        RazorpayCheckout.open(options as any).then(async (data: any) => {
+          // Handle success
+          await createOrder(data);
+          await verifyPayment(data); // Add this line to verify payment
+          alert(`Success: ${data.razorpay_payment_id}`);
+        }).catch((error: any) => {
+          // Handle failure
+          alert(`Error: ${error.code} | ${error.description}`);
+          console.error(error);
+        });
       } else {
         console.error("RazorpayCheckout is not initialized.");
       }
@@ -173,6 +173,30 @@ export default function CartScreen() {
       console.error(error);
     }
   };
+  const verifyPayment = async (paymentResponse: any) => {
+    try {
+      const accessToken = await AsyncStorage.getItem("access_token");
+      const refreshToken = await AsyncStorage.getItem("refresh_token");
+
+      await axios.post(
+        `${SERVER_URI}/verify-payment`,
+        {
+          razorpay_order_id: paymentResponse.razorpay_order_id,
+          razorpay_payment_id: paymentResponse.razorpay_payment_id,
+          razorpay_signature: paymentResponse.razorpay_signature,
+        },
+        {
+          headers: {
+            "access-token": accessToken,
+            "refresh-token": refreshToken,
+          },
+        }
+      );
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
 
   const createOrder = async (paymentResponse: any) => {
     try {

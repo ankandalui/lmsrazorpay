@@ -5,6 +5,7 @@ import {
   getAllOrders,
   newPayment,
   sendRazorpayKeyId,
+  verifyPayment
 } from "../controllers/order.controller";
 const orderRouter = express.Router();
 
@@ -20,5 +21,6 @@ orderRouter.get(
 orderRouter.get("/payment/razorpaykeyid", sendRazorpayKeyId);
 
 orderRouter.post("/payment", isAutheticated, newPayment);
+orderRouter.post("/verify-payment", isAutheticated, verifyPayment);
 
 export default orderRouter;

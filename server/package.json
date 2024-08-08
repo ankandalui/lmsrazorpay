@@ -40,6 +40,7 @@
     "mongoose": "^8.5.1",
     "node-cron": "^3.0.3",
     "nodemailer": "^6.9.14",
+    "qrcode": "^1.5.4",
     "razorpay": "^2.9.4",
     "socket.io": "^4.7.5",
     "stripe": "^16.2.0",
@@ -48,6 +49,7 @@
   "devDependencies": {
     "@types/express-fileupload": "^1.5.0",
     "@types/node": "^20.14.10",
+    "@types/qrcode": "^1.5.5",
     "@types/socket.io": "^3.0.2",
     "typescript": "^5.5.3"
   },

@@ -11,6 +11,7 @@ import NotificationModel from "../models/notification.Model";
 import { getAllOrdersService, newOrder } from "../services/order.service";
 import { redis } from "../utils/redis";
 import Razorpay from 'razorpay';
+import crypto from "crypto";
 require("dotenv").config();
 
 const razorpay = new Razorpay({
@@ -159,6 +160,32 @@ export const newPayment = CatchAsyncError(
         amount: order.amount,
         currency: order.currency,
         key_id: process.env.RAZORPAY_KEY_ID,
+      });
+    } catch (error: any) {
+      return next(new ErrorHandler(error.message, 500));
+    }
+  }
+);
+
+export const verifyPayment = CatchAsyncError(
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const { razorpay_order_id, razorpay_payment_id, razorpay_signature } = req.body;
+
+      const secret = process.env.RAZORPAY_KEY_SECRET as string;
+
+      const shasum = crypto.createHmac("sha256", secret);
+      shasum.update(`${razorpay_order_id}|${razorpay_payment_id}`);
+      const digest = shasum.digest("hex");
+
+      if (digest !== razorpay_signature) {
+        return next(new ErrorHandler("Invalid payment signature", 400));
+      }
+
+      // Payment signature is valid
+      res.status(200).json({
+        success: true,
+        message: "Payment verified successfully",
       });
     } catch (error: any) {
       return next(new ErrorHandler(error.message, 500));
