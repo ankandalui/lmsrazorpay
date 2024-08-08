@@ -1,13 +1,5 @@
-import Loader from "@/components/loader/loader";
-import useUser from "@/hooks/auth/useUser";
-import { SERVER_URI } from "@/utils/uri";
-import { Entypo, FontAwesome } from "@expo/vector-icons";
-import AsyncStorage from "@react-native-async-storage/async-storage";
-import { useStripe } from "@stripe/stripe-react-native";
-import axios from "axios";
-import { LinearGradient } from "expo-linear-gradient";
-import { router } from "expo-router";
-import { useEffect, useState } from "react";
+
+import React, { useEffect, useState } from "react";
 import {
   View,
   Text,
@@ -16,26 +8,34 @@ import {
   Image,
   RefreshControl,
 } from "react-native";
+import { LinearGradient } from "expo-linear-gradient";
+import { Entypo, FontAwesome } from "@expo/vector-icons";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import axios from "axios";
+import Loader from "@/components/loader/loader";
+import useUser from "@/hooks/auth/useUser";
+import { SERVER_URI } from "@/utils/uri";
+import RazorpayCheckout from 'react-native-razorpay';
+import { router } from "expo-router";
 
 export default function CartScreen() {
   const [cartItems, setCartItems] = useState<CoursesType[]>([]);
   const [refreshing, setRefreshing] = useState(false);
   const [orderSuccess, setOrderSuccess] = useState(false);
-  const { initPaymentSheet, presentPaymentSheet } = useStripe();
   const { user, loading } = useUser();
 
   useEffect(() => {
-    const subscription = async () => {
+    const fetchCartItems = async () => {
       const cart: any = await AsyncStorage.getItem("cart");
       setCartItems(JSON.parse(cart));
     };
-    subscription();
+    fetchCartItems();
   }, []);
 
   const onRefresh = async () => {
     setRefreshing(true);
     const cart: any = await AsyncStorage.getItem("cart");
-    setCartItems(cart);
+    setCartItems(JSON.parse(cart));
     setRefreshing(false);
   };
 
@@ -67,7 +67,7 @@ export default function CartScreen() {
         cartItems.reduce((total, item) => total + item.price, 0) * 100
       );
 
-      const paymentIntentResponse = await axios.post(
+      const paymentOrderResponse = await axios.post(
         `${SERVER_URI}/payment`,
         { amount },
         {
@@ -78,37 +78,47 @@ export default function CartScreen() {
         }
       );
 
-      const { client_secret: clientSecret } = paymentIntentResponse.data;
+      const { order_id, amount: orderAmount } = paymentOrderResponse.data;
 
-      const initSheetResponse = await initPaymentSheet({
-        merchantDisplayName: "Becodemy Private Ltd.",
-        paymentIntentClientSecret: clientSecret,
-      });
+      const options = {
+        description: 'Order Payment',
+        image: 'https://your_logo_url', // Optional: You can provide a logo URL
+        currency: 'INR',
+        key: process.env.EXPO_PUBLIC_RAZORPAY_KEY_ID, // Use Razorpay key ID
+        amount: orderAmount,
+        order_id: order_id,
+        prefill: {
+          email: user?.email,
+          contact: user?.phone,
+          name: user?.name,
+        },
+        theme: { color: '#F37254' },
+      };
 
-      if (initSheetResponse.error) {
-        console.error(initSheetResponse.error);
-        return;
-      }
-
-      const paymentResponse = await presentPaymentSheet();
-
-      if (paymentResponse.error) {
-        console.error(paymentResponse.error);
+      if (RazorpayCheckout) {
+        RazorpayCheckout.open(options as any).then(async (data: any) => {
+          // Handle success
+          await createOrder(data);
+        }).catch((error: any) => {
+          // Handle failure
+          console.error(error);
+        });
       } else {
-        await createOrder(paymentResponse);
+        console.error("RazorpayCheckout is not initialized.");
       }
     } catch (error) {
       console.error(error);
     }
   };
 
-  const createOrder = async (paymentResponse: any) => {
-    const accessToken = await AsyncStorage.getItem("access_token");
-    const refreshToken = await AsyncStorage.getItem("refresh_token");
 
-    await axios
-      .post(
-        `${SERVER_URI}/create-mobile-order`,
+  const createOrder = async (paymentResponse: any) => {
+    try {
+      const accessToken = await AsyncStorage.getItem("access_token");
+      const refreshToken = await AsyncStorage.getItem("refresh_token");
+
+      await axios.post(
+        `${SERVER_URI}/create-order`,
         {
           courseId: cartItems[0]._id,
           payment_info: paymentResponse,
@@ -119,16 +129,13 @@ export default function CartScreen() {
             "refresh-token": refreshToken,
           },
         }
-      )
-      .then((res) => {
-        setOrderSuccess(true);
-        AsyncStorage.removeItem("cart");
-      })
-      .catch((error) => {
-        console.log(error);
-      });
+      );
+      setOrderSuccess(true);
+      AsyncStorage.removeItem("cart");
+    } catch (error) {
+      console.log(error);
+    }
   };
-
   return (
     <>
       {loading ? (

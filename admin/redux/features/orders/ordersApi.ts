@@ -11,7 +11,7 @@ export const ordersApi = apiSlice.injectEndpoints({
     }),
     getStripePublishablekey: builder.query({
       query: () => ({
-        url: `payment/razorpaykey`,
+        url: `payment/stripepublishablekey`,
         method: "GET",
         credentials: "include" as const,
       }),
