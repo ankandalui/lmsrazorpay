@@ -15,8 +15,11 @@ import axios from "axios";
 import Loader from "@/components/loader/loader";
 import useUser from "@/hooks/auth/useUser";
 import { SERVER_URI } from "@/utils/uri";
-import RazorpayCheckout from 'react-native-razorpay';
+
 import { router } from "expo-router";
+import RazorpayCheckout from 'react-native-razorpay';
+
+console.log("RazorpayCheckout:", RazorpayCheckout);
 
 export default function CartScreen() {
   const [cartItems, setCartItems] = useState<CoursesType[]>([]);
@@ -59,6 +62,64 @@ export default function CartScreen() {
     setCartItems(updatedCartData);
   };
 
+  // const handlePayment = async () => {
+  //   try {
+  //     const accessToken = await AsyncStorage.getItem("access_token");
+  //     const refreshToken = await AsyncStorage.getItem("refresh_token");
+  //     const amount = Math.round(
+  //       cartItems.reduce((total, item) => total + item.price, 0) * 100
+  //     );
+
+  //     const paymentOrderResponse = await axios.post(
+  //       `${SERVER_URI}/payment`,
+  //       { amount },
+  //       {
+  //         headers: {
+  //           "access-token": accessToken,
+  //           "refresh-token": refreshToken,
+  //         },
+  //       }
+  //     );
+
+  //     const { order_id, amount: orderAmount } = paymentOrderResponse.data;
+
+  //     const options = {
+  //       description: 'Order Payment',
+  //       image: 'https://your_logo_url', // Optional: You can provide a logo URL
+  //       currency: 'INR',
+  //       key: 'rzp_test_N4obyVtvC7EiSq', // Replace with your actual Razorpay Key ID
+
+  //       amount: orderAmount,
+  //       order_id: order_id,
+  //       prefill: {
+  //         email: user?.email,
+  //         contact: user?.phone,
+  //         name: user?.name,
+  //       },
+  //       theme: { color: '#F37254' },
+  //     };
+      
+
+
+  //     if (RazorpayCheckout) {
+  //       RazorpayCheckout.open(options as any).then(async (data: any) => {
+  //         // Handle success
+  //         await createOrder(data);
+  //         alert(`Success: ${data.razorpay_payment_id}`);
+  //       }).catch((error: any) => {
+  //         // Handle failure
+  //         alert(`Error: ${error.code} | ${error.description}`);
+  //         console.error(error);
+  //       });
+  //     } else {
+  //       console.error("RazorpayCheckout is not initialized.");
+  //     }
+ 
+  //   } catch (error) {
+  //     console.error(error);
+  //   }
+  // };
+
   const handlePayment = async () => {
     try {
       const accessToken = await AsyncStorage.getItem("access_token");
@@ -82,9 +143,9 @@ export default function CartScreen() {
 
       const options = {
         description: 'Order Payment',
-        image: 'https://your_logo_url', // Optional: You can provide a logo URL
+        image: 'https://your_logo_url',
         currency: 'INR',
-        key: process.env.EXPO_PUBLIC_RAZORPAY_KEY_ID, // Use Razorpay key ID
+        key: 'rzp_test_N4obyVtvC7EiSq', // Replace with your actual Razorpay Key ID
         amount: orderAmount,
         order_id: order_id,
         prefill: {
@@ -96,13 +157,15 @@ export default function CartScreen() {
       };
 
       if (RazorpayCheckout) {
-        RazorpayCheckout.open(options as any).then(async (data: any) => {
-          // Handle success
-          await createOrder(data);
-        }).catch((error: any) => {
-          // Handle failure
-          console.error(error);
-        });
+        RazorpayCheckout.open(options as any)
+          .then(async (data: any) => {
+            await createOrder(data);
+            alert(`Success: ${data.razorpay_payment_id}`);
+          })
+          .catch((error: any) => {
+            alert(`Error: ${error.code} | ${error.description}`);
+            console.error(error);
+          });
       } else {
         console.error("RazorpayCheckout is not initialized.");
       }
@@ -110,7 +173,6 @@ export default function CartScreen() {
       console.error(error);
     }
   };
-
 
   const createOrder = async (paymentResponse: any) => {
     try {
