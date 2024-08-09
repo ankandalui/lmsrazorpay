@@ -232,20 +232,20 @@ export const updateAccessToken = CatchAsyncError(
         }
       );
 
-      const refreshToken = jwt.sign(
-        { id: user._id },
-        process.env.REFRESH_TOKEN as string,
-        {
-          expiresIn: "3d",
-        }
-      );
+      // const refreshToken = jwt.sign(
+      //   { id: user._id },
+      //   process.env.REFRESH_TOKEN as string,
+      //   {
+      //     expiresIn: "3d",
+      //   }
+      // );
 
       req.user = user;
 
       // res.cookie("access_token", accessToken, accessTokenOptions);
       // res.cookie("refresh_token", refreshToken, refreshTokenOptions);
       res.cookie("access_token", accessToken, { httpOnly: true, sameSite: 'lax' });
-      res.cookie("refresh_token", refreshToken, { httpOnly: true, sameSite: 'lax' });
+      // res.cookie("refresh_token", refreshToken, { httpOnly: true, sameSite: 'lax' });
 
 
       await redis.set(user._id, JSON.stringify(user), "EX", 604800); // 7days
