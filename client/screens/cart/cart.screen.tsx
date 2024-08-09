@@ -62,63 +62,7 @@ export default function CartScreen() {
     setCartItems(updatedCartData);
   };
 
-  // const handlePayment = async () => {
-  //   try {
-  //     const accessToken = await AsyncStorage.getItem("access_token");
-  //     const refreshToken = await AsyncStorage.getItem("refresh_token");
-  //     const amount = Math.round(
-  //       cartItems.reduce((total, item) => total + item.price, 0) * 100
-  //     );
 
-  //     const paymentOrderResponse = await axios.post(
-  //       `${SERVER_URI}/payment`,
-  //       { amount },
-  //       {
-  //         headers: {
-  //           "access-token": accessToken,
-  //           "refresh-token": refreshToken,
-  //         },
-  //       }
-  //     );
-
-  //     const { order_id, amount: orderAmount } = paymentOrderResponse.data;
-
-  //     const options = {
-  //       description: 'Order Payment',
-  //       image: 'https://your_logo_url', // Optional: You can provide a logo URL
-  //       currency: 'INR',
-  //       key: 'rzp_test_N4obyVtvC7EiSq', // Replace with your actual Razorpay Key ID
-
-  //       amount: orderAmount,
-  //       order_id: order_id,
-  //       prefill: {
-  //         email: user?.email,
-  //         contact: user?.phone,
-  //         name: user?.name,
-  //       },
-  //       theme: { color: '#F37254' },
-  //     };
-      
-
-
-  //     if (RazorpayCheckout) {
-  //       RazorpayCheckout.open(options as any).then(async (data: any) => {
-  //         // Handle success
-  //         await createOrder(data);
-  //         alert(`Success: ${data.razorpay_payment_id}`);
-  //       }).catch((error: any) => {
-  //         // Handle failure
-  //         alert(`Error: ${error.code} | ${error.description}`);
-  //         console.error(error);
-  //       });
-  //     } else {
-  //       console.error("RazorpayCheckout is not initialized.");
-  //     }
- 
-  //   } catch (error) {
-  //     console.error(error);
-  //   }
-  // };
   const handlePayment = async () => {
     try {
       const accessToken = await AsyncStorage.getItem("access_token");
@@ -128,32 +72,37 @@ export default function CartScreen() {
       );
 
       const paymentOrderResponse = await axios.post(
-        `${SERVER_URI}/payment`,
-        { amount },
+        `http://localhost:8000/api/v1/payment`,
+        { amount:amount },
         {
           headers: {
             "access-token": accessToken,
             "refresh-token": refreshToken,
+            'Content-Type': 'application/json',
           },
+          
         }
       );
-
+      console.log('Response:', paymentOrderResponse.data);
+      
+    
       const { order_id, amount: orderAmount } = paymentOrderResponse.data;
 
       const options = {
         description: 'Order Payment',
-        image: 'https://solvit-test-deploy.vercel.app/_next/image?url=%2F_next%2Fstatic%2Fmedia%2Fbanner-img-1.5a8bcf67.png&w=640&q=75', // Optional: You can provide a logo URL
+        image: 'https://solvit-test-deploy.vercel.app/_next/image?url=%2F_next%2Fstatic%2Fmedia%2Fbanner-img-1.5a8bcf67.png&w=640&q=75',
         currency: 'INR',
-        key: 'rzp_test_N4obyVtvC7EiSq', // Replace with your actual Razorpay Key ID
+        key: 'rzp_test_N4obyVtvC7EiSq',
         amount: orderAmount,
         order_id: order_id,
         prefill: {
-          email: user?.email,
-          contact: user?.phone,
-          name: user?.name,
+          email: user?.email || '',
+          contact: user?.phone || '',
+          name: user?.name || '', 
         },
         theme: { color: '#F37254' },
       };
+
 
       if (RazorpayCheckout) {
         RazorpayCheckout.open(options as any).then(async (data: any) => {
