@@ -72,7 +72,7 @@ export default function CartScreen() {
       );
 
       const paymentOrderResponse = await axios.post(
-        `http://localhost:8000/api/v1/payment`,
+        `http://192.168.29.88:8000/api/v1/payment`,
         { amount:amount },
         {
           headers: {
