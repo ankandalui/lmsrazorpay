@@ -66,8 +66,7 @@ export default function AllCourses() {
           Popular courses
         </Text>
         <TouchableOpacity
-          onPress={() => router.push({ pathname: "/(tabs)/courses" as "/(tabs)/courses" })}
-
+          onPress={() => router.push({ pathname: "/(tabs)/courses" as "" })}
         >
           <Text
             style={{

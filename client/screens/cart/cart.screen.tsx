@@ -15,12 +15,8 @@ import axios from "axios";
 import Loader from "@/components/loader/loader";
 import useUser from "@/hooks/auth/useUser";
 import { SERVER_URI } from "@/utils/uri";
-
-import { router } from "expo-router";
 import RazorpayCheckout from 'react-native-razorpay';
-
-
-console.log("RazorpayCheckout:", RazorpayCheckout);
+import { router } from "expo-router";
 
 export default function CartScreen() {
   const [cartItems, setCartItems] = useState<CoursesType[]>([]);
@@ -63,79 +59,17 @@ export default function CartScreen() {
     setCartItems(updatedCartData);
   };
 
-
   const handlePayment = async () => {
     try {
       const accessToken = await AsyncStorage.getItem("access_token");
-      // const refreshToken = await AsyncStorage.getItem("refresh_token");
+      const refreshToken = await AsyncStorage.getItem("refresh_token");
       const amount = Math.round(
         cartItems.reduce((total, item) => total + item.price, 0) * 100
       );
 
       const paymentOrderResponse = await axios.post(
-        `http://192.168.29.88:8000/api/v1/payment`,
-        { amount:amount },
-        {
-          headers: {
-            "access-token": accessToken,
-            // "refresh-token": refreshToken,
-            'Content-Type': 'application/json',
-          },
-          
-        }
-      );
-      console.log('Response:', paymentOrderResponse.data);
-      
-    
-      const { order_id, amount: orderAmount } = paymentOrderResponse.data;
-
-      const options = {
-        description: 'Order Payment',
-        image: 'https://solvit-test-deploy.vercel.app/_next/image?url=%2F_next%2Fstatic%2Fmedia%2Fbanner-img-1.5a8bcf67.png&w=640&q=75',
-        currency: 'INR',
-        key: 'rzp_test_N4obyVtvC7EiSq',
-        amount: orderAmount,
-        order_id: order_id,
-        prefill: {
-          email: user?.email || 'Sandipan Das',
-          contact: user?.phone || '83350194045',
-          name: user?.name || 'saddad', 
-        },
-        theme: { color: '#F37254' },
-      };
-
-      console.log("Calling RazorpayCheckout.open with options:", options);
-
-      if (RazorpayCheckout && typeof RazorpayCheckout.open === 'function') {
-        RazorpayCheckout.open(options as any).then(async (data: any) => {
-          await createOrder(data);
-          await verifyPayment(data);
-          alert(`Success: ${data.razorpay_payment_id}`);
-        }).catch((error: any) => {
-          alert(`Error: ${error.code} | ${error.description}`);
-          console.error(error);
-        });
-      } else {
-        console.error("RazorpayCheckout is not a function or not initialized properly.");
-      }
-
-  
-    } catch (error) {
-      console.error(error);
-    }
-  };
-  const verifyPayment = async (paymentResponse: any) => {
-    try {
-      const accessToken = await AsyncStorage.getItem("access_token");
-      const refreshToken = await AsyncStorage.getItem("refresh_token");
-
-      await axios.post(
-        `${SERVER_URI}/verify-payment`,
-        {
-          razorpay_order_id: paymentResponse.razorpay_order_id,
-          razorpay_payment_id: paymentResponse.razorpay_payment_id,
-          razorpay_signature: paymentResponse.razorpay_signature,
-        },
+        `${SERVER_URI}/payment`,
+        { amount },
         {
           headers: {
             "access-token": accessToken,
@@ -143,8 +77,37 @@ export default function CartScreen() {
           },
         }
       );
+
+      const { order_id, amount: orderAmount } = paymentOrderResponse.data;
+
+      const options = {
+        description: 'Order Payment',
+        image: 'https://your_logo_url', // Optional: You can provide a logo URL
+        currency: 'INR',
+        key: process.env.EXPO_PUBLIC_RAZORPAY_KEY_ID, // Use Razorpay key ID
+        amount: orderAmount,
+        order_id: order_id,
+        prefill: {
+          email: user?.email,
+          contact: user?.phone,
+          name: user?.name,
+        },
+        theme: { color: '#F37254' },
+      };
+
+      if (RazorpayCheckout) {
+        RazorpayCheckout.open(options as any).then(async (data: any) => {
+          // Handle success
+          await createOrder(data);
+        }).catch((error: any) => {
+          // Handle failure
+          console.error(error);
+        });
+      } else {
+        console.error("RazorpayCheckout is not initialized.");
+      }
     } catch (error) {
-      console.log(error);
+      console.error(error);
     }
   };
 
