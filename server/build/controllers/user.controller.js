@@ -144,12 +144,18 @@ exports.updateAccessToken = (0, catchAsyncErrors_1.CatchAsyncError)(async (req, 
         const accessToken = jsonwebtoken_1.default.sign({ id: user._id }, process.env.ACCESS_TOKEN, {
             expiresIn: "1440m",
         });
-        const refreshToken = jsonwebtoken_1.default.sign({ id: user._id }, process.env.REFRESH_TOKEN, {
-            expiresIn: "3d",
-        });
+        // const refreshToken = jwt.sign(
+        //   { id: user._id },
+        //   process.env.REFRESH_TOKEN as string,
+        //   {
+        //     expiresIn: "3d",
+        //   }
+        // );
         req.user = user;
-        res.cookie("access_token", accessToken, jwt_1.accessTokenOptions);
-        res.cookie("refresh_token", refreshToken, jwt_1.refreshTokenOptions);
+        // res.cookie("access_token", accessToken, accessTokenOptions);
+        // res.cookie("refresh_token", refreshToken, refreshTokenOptions);
+        res.cookie("access_token", accessToken, { httpOnly: true, sameSite: 'lax' });
+        // res.cookie("refresh_token", refreshToken, { httpOnly: true, sameSite: 'lax' });
         await redis_1.redis.set(user._id, JSON.stringify(user), "EX", 604800); // 7days
         res.status(200).json({
             status: "Success",
@@ -161,59 +167,6 @@ exports.updateAccessToken = (0, catchAsyncErrors_1.CatchAsyncError)(async (req, 
         return next(new ErrorHandler_1.default(error.message, 400));
     }
 });
-//modified code for error in  refresh token
-// export const updateAccessToken = CatchAsyncError(
-//   async (req: Request, res: Response, next: NextFunction) => {
-//     try {
-//       const refresh_token = req.cookies.refresh_token as string;
-//       const decoded = jwt.verify(
-//         refresh_token,
-//         process.env.REFRESH_TOKEN as string
-//       ) as JwtPayload;
-//       const message = "Could not refresh token";
-//       if (!decoded) {
-//         return next(new ErrorHandler(message, 400));
-//       }
-//       const session = await redis.get(decoded.id as string);
-//       if (!session) {
-//         return next(
-//           new ErrorHandler("Please login for access this resources!", 400)
-//         );
-//       }
-//       const user = JSON.parse(session);
-//       const accessToken = jwt.sign(
-//         { id: user._id },
-//         process.env.ACCESS_TOKEN as string,
-//         {
-//           expiresIn: "5m",
-//         }
-//       );
-//       const refreshToken = jwt.sign(
-//         { id: user._id },
-//         process.env.REFRESH_TOKEN as string,
-//         {
-//           expiresIn: "3d",
-//         }
-//       );
-//       req.user = user;
-//       // Set cookies for the new tokens
-//       res.cookie("access_token", accessToken, accessTokenOptions);
-//       res.cookie("refresh_token", refreshToken, refreshTokenOptions);
-//       // Fixed the missing comma and closing parenthesis
-//       await redis.set(user._id, JSON.stringify(user));
-//       // Send the response
-//       res.status(200).json({
-//         status: "Success",
-//         accessToken,
-//       });
-//       // Return after sending response to prevent further execution
-//       return;
-//     } catch (error: any) {
-//       // Send error response and return
-//       return next(new ErrorHandler(error.message, 400));
-//     }
-//   }
-// );
 // get user info
 exports.getUserInfo = (0, catchAsyncErrors_1.CatchAsyncError)(async (req, res, next) => {
     try {
@@ -391,3 +344,157 @@ exports.deleteUser = (0, catchAsyncErrors_1.CatchAsyncError)(async (req, res, ne
         return next(new ErrorHandler_1.default(error.message, 400));
     }
 });
+// // Reset Password
+// interface IPasswordReset {
+//   resetToken: string;
+//   newPassword: string;
+// }
+// interface IPasswordResetRequest {
+//   email: string;
+// }
+// export const requestPasswordReset = CatchAsyncError(
+//   async (req: Request, res: Response, next: NextFunction) => {
+//     try {
+//       const { email } = req.body as IPasswordResetRequest;
+//       // Find the user by email
+//       const user = await userModel.findOne({ email });
+//       if (!user) {
+//         return next(new ErrorHandler("User with this email does not exist", 400));
+//       }
+//       // Generate a reset token and set its expiration
+//       const resetToken = crypto.randomBytes(32).toString('hex');
+//       user.passwordResetToken = resetToken;
+//       user.passwordResetTokenExpire = new Date(Date.now() + 3600000); // 1 hour
+//       await user.save();
+//       // Prepare data for the email content
+//       const userName = user.name;
+//       const resetLink = `${process.env.FRONTEND_URL}/reset-password?token=${resetToken}`;
+//       const supportUrl = `${process.env.FRONTEND_URL}/support`;
+//       // Directly create the HTML email content
+//       const emailContent = `
+//         <!DOCTYPE html>
+//         <html lang="en">
+//         <head>
+//           <meta charset="UTF-8">
+//           <meta name="viewport" content="width=device-width, initial-scale=1.0">
+//           <title>Password Reset Request</title>
+//           <style>
+//             body {
+//               margin: 0;
+//               padding: 0;
+//               min-width: 100%;
+//               font-family: Arial, sans-serif;
+//               font-size: 16px;
+//               line-height: 1.5;
+//               background-color: #fafafa;
+//               color: #222222;
+//             }
+//             a {
+//               color: #0070f3;
+//               text-decoration: none;
+//             }
+//             .email-wrapper {
+//               max-width: 600px;
+//               margin: 0 auto;
+//               background-color: #ffffff;
+//               border-radius: 8px;
+//               box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+//             }
+//             .email-header {
+//               background-color: #0070f3;
+//               padding: 24px;
+//               color: #ffffff;
+//               text-align: center;
+//             }
+//             .email-body {
+//               padding: 24px;
+//             }
+//             .button {
+//               display: inline-block;
+//               background-color: #0070f3;
+//               color: #ffffff;
+//               font-size: 16px;
+//               font-weight: 700;
+//               text-align: center;
+//               text-decoration: none;
+//               padding: 12px 24px;
+//               border-radius: 4px;
+//               margin-top: 10px;
+//             }
+//             .email-footer {
+//               background-color: #f6f6f6;
+//               padding: 24px;
+//               text-align: center;
+//               font-size: 14px;
+//               color: #666666;
+//             }
+//           </style>
+//         </head>
+//         <body>
+//           <div class="email-wrapper">
+//             <div class="email-header">
+//               <h1>Password Reset Request</h1>
+//             </div>
+//             <div class="email-body">
+//               <p>Hello ${userName},</p>
+//               <p>We received a request to reset your password for your SolviT account. If you did not request this change, please ignore this email.</p>
+//               <p>To reset your password, please click the button below:</p>
+//               <a href="${resetLink}" class="button">Reset Password</a>
+//               <p>If the button above doesn't work, you can copy and paste the following link into your browser:</p>
+//               <p>${resetLink}</p>
+//             </div>
+//             <div class="email-footer">
+//               <p>Thank you for using SolviT!</p>
+//               <p>For any questions or support, please visit our <a href="${supportUrl}">support page</a>.</p>
+//               <p>&copy; ${new Date().getFullYear()} SolviT. All rights reserved.</p>
+//             </div>
+//           </div>
+//         </body>
+//         </html>
+//       `;
+//       // Adjust to fit your sendMail function's API
+//       try {
+//         await sendMail({
+//           to: user.email, // Typically, 'to' or 'recipient' might be used
+//           subject: "Reset Your Password",
+//           text: emailContent, // Use 'text' if 'html' is not supported
+//           // Add any other required properties based on your `sendMail` implementation
+//         });
+//         res.status(200).json({
+//           success: true,
+//           message: `A password reset link has been sent to ${user.email}`,
+//         });
+//       } catch (error: any) {
+//         return next(new ErrorHandler(error.message, 400));
+//       }
+//     } catch (error: any) {
+//       return next(new ErrorHandler(error.message, 400));
+//     }
+//   }
+// );
+// export const resetPassword = CatchAsyncError(
+//   async (req: Request, res: Response, next: NextFunction) => {
+//     try {
+//       const { resetToken, newPassword } = req.body as IPasswordReset;
+//       // Find the user by the reset token and check if the token has expired
+//       const user = await userModel.findOne({
+//         passwordResetToken: resetToken,
+//         passwordResetTokenExpire: { $gt: Date.now() },
+//       });
+//       if (!user) {
+//         return next(new ErrorHandler("Invalid or expired reset token", 400));
+//       }
+//       // Hash the new password before saving
+//       user.password = await bcrypt.hash(newPassword, 10);
+//       user.passwordResetToken = undefined;
+//       user.passwordResetTokenExpire = undefined;
+//       await user.save();
+//       res.status(200).json({
+//         success: true,
+//         message: "Password has been successfully reset",
+//       });
+//     } catch (error: any) {
+//       return next(new ErrorHandler(error.message, 400));
+//     }
+//   }
+// );

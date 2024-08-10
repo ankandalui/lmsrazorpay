@@ -276,7 +276,6 @@ const courseSchema = new mongoose_1.Schema({
     },
     categories: {
         type: String,
-        required: true,
     },
     price: {
         type: Number,

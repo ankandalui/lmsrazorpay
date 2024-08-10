@@ -11,6 +11,10 @@ userRouter.post("/registration", user_controller_1.registrationUser);
 userRouter.post("/activate-user", user_controller_1.activateUser);
 userRouter.post("/login", user_controller_1.loginUser);
 userRouter.get("/logout", auth_1.isAutheticated, user_controller_1.logoutUser);
+// // reset password request
+// userRouter.post("/password-reset-request", requestPasswordReset);
+// // reset password
+// userRouter.post("/password-reset", resetPassword);
 userRouter.get('/refreshtoken', user_controller_1.updateAccessToken);
 userRouter.get("/me", auth_1.isAutheticated, user_controller_1.getUserInfo);
 userRouter.post("/social-auth", user_controller_1.socialAuth);

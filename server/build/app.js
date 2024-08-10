@@ -29,16 +29,16 @@ exports.app.use((0, express_fileupload_1.default)({
     tempFileDir: '/tmp/'
 }));
 exports.app.use((0, cors_1.default)({
-    origin: ["https://www.solvit.live"],
+    origin: ["https://solvit-test-deploy.vercel.app", "https://solvit-client.vercel.app", "http://localhost:3000", "http://localhost:8081"],
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
-    allowedHeaders: ['Content-Type', 'Authorization'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'access-token'],
     credentials: true,
 }));
 // app.use(cors({ origin: process.env.ORIGIN, credentials: true, }))
 // api requests limit
 const limiter = (0, express_rate_limit_1.rateLimit)({
     windowMs: 15 * 60 * 1000,
-    max: 100,
+    max: 2000,
     standardHeaders: 'draft-7',
     legacyHeaders: false,
 });

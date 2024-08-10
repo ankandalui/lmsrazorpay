@@ -24,19 +24,21 @@ var __importStar = (this && this.__importStar) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const mongoose_1 = __importStar(require("mongoose"));
+// Create the order schema
 const orderSchema = new mongoose_1.Schema({
     courseId: {
         type: String,
-        required: true
+        required: true,
     },
     userId: {
         type: String,
-        required: true
+        required: true,
     },
     payment_info: {
         type: Object,
-        // required: true
+        required: true,
     },
 }, { timestamps: true });
+// Create and export the Order model
 const OrderModel = mongoose_1.default.model('Order', orderSchema);
 exports.default = OrderModel;

@@ -19,6 +19,7 @@ import { SERVER_URI } from "@/utils/uri";
 import { router } from "expo-router";
 import RazorpayCheckout from 'react-native-razorpay';
 
+
 console.log("RazorpayCheckout:", RazorpayCheckout);
 
 export default function CartScreen() {
@@ -96,28 +97,29 @@ export default function CartScreen() {
         amount: orderAmount,
         order_id: order_id,
         prefill: {
-          email: user?.email || '',
-          contact: user?.phone || '',
-          name: user?.name || '', 
+          email: user?.email || 'Sandipan Das',
+          contact: user?.phone || '83350194045',
+          name: user?.name || 'saddad', 
         },
         theme: { color: '#F37254' },
       };
 
+      console.log("Calling RazorpayCheckout.open with options:", options);
 
-      if (RazorpayCheckout) {
+      if (RazorpayCheckout && typeof RazorpayCheckout.open === 'function') {
         RazorpayCheckout.open(options as any).then(async (data: any) => {
-          // Handle success
           await createOrder(data);
-          await verifyPayment(data); // Add this line to verify payment
+          await verifyPayment(data);
           alert(`Success: ${data.razorpay_payment_id}`);
         }).catch((error: any) => {
-          // Handle failure
           alert(`Error: ${error.code} | ${error.description}`);
           console.error(error);
         });
       } else {
-        console.error("RazorpayCheckout is not initialized.");
+        console.error("RazorpayCheckout is not a function or not initialized properly.");
       }
+
+  
     } catch (error) {
       console.error(error);
     }
