@@ -369,7 +369,7 @@ export default function CourseDetailScreen() {
               marginBottom: 10,
             }}
           >
-            {checkPurchased === true ? (
+            {checkPurchased === false ? (
               <TouchableOpacity
                 style={{
                   backgroundColor: "#2467EC",

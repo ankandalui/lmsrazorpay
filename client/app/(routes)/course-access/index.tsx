@@ -1,5 +1,5 @@
-// import CourseAccessScreen from "@/screens/courses/course.access";
+import CourseAccessScreen from "@/screens/courses/course.access";
 
-// export default function index() {
-//   return <CourseAccessScreen />;
-// }
+export default function index() {
+  return <CourseAccessScreen />;
+}

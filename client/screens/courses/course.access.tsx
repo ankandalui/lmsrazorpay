@@ -433,3 +433,58 @@
 //     justifyContent: "center",
 //   },
 // });
+
+import React from 'react';
+import { View, Text, TouchableOpacity, StyleSheet, SafeAreaView } from 'react-native';
+import { useNavigation } from '@react-navigation/native';
+
+const CourseAccessScreen = () => {
+    const navigation = useNavigation();
+
+    const navigateToHome = () => {
+        navigation.navigate('Home');
+    };
+
+    return (
+        <SafeAreaView style={styles.container}>
+            <View style={styles.innerContainer}>
+                <Text style={styles.welcomeText}>Welcome to the App!</Text>
+                <TouchableOpacity style={styles.button} onPress={navigateToHome}>
+                    <Text style={styles.buttonText}>Go to Home</Text>
+                </TouchableOpacity>
+            </View>
+        </SafeAreaView>
+    );
+};
+
+const styles = StyleSheet.create({
+    container: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+        backgroundColor: '#f5f5f5',
+    },
+    innerContainer: {
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    welcomeText: {
+        fontSize: 24,
+        fontWeight: 'bold',
+        marginBottom: 20,
+        color: '#333',
+    },
+    button: {
+        backgroundColor: '#2467EC',
+        paddingVertical: 15,
+        paddingHorizontal: 30,
+        borderRadius: 5,
+    },
+    buttonText: {
+        color: '#fff',
+        fontSize: 16,
+        fontWeight: '600',
+    },
+});
+
+export default CourseAccessScreen;

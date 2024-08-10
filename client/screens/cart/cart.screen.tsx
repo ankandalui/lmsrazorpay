@@ -16,7 +16,7 @@ import Loader from "@/components/loader/loader";
 import useUser from "@/hooks/auth/useUser";
 import { SERVER_URI } from "@/utils/uri";
 import RazorpayCheckout from 'react-native-razorpay';
-import { router } from "expo-router";
+import { Redirect, router } from "expo-router";
 
 export default function CartScreen() {
   const [cartItems, setCartItems] = useState<CoursesType[]>([]);
@@ -364,7 +364,7 @@ export default function CartScreen() {
                         width: "80%",
                         alignSelf: "center",
                       }}
-                      onPress={() => handlePayment()}
+                        onPress={() => router.push("/(routes)/course-access")}
                     >
                       <Text
                         style={{
