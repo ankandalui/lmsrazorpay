@@ -457,9 +457,17 @@ import axios from "axios";
 import { SERVER_URI } from "@/utils/uri";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { WebView } from "react-native-webview";
-import { widthPercentageToDP } from "react-native-responsive-screen";
 import { Toast } from "react-native-toast-notifications";
 import useUser from "@/hooks/auth/useUser";
+
+const isValidJson = (data:any) => {
+    try {
+        JSON.parse(data);
+        return true;
+    } catch (error) {
+        return false;
+    }
+};
 
 export default function CourseAccessScreen() {
     const [isLoading, setIsLoading] = useState(true);
@@ -491,23 +499,28 @@ export default function CourseAccessScreen() {
     const fetchCourseContent = async () => {
         const accessToken = await AsyncStorage.getItem("access_token");
         const refreshToken = await AsyncStorage.getItem("refresh_token");
-        await axios
-            .get(`${SERVER_URI}/get-course-content/${data._id}`, {
+        try {
+            const response = await axios.get(`${SERVER_URI}/get-course-content/${data._id}`, {
                 headers: {
                     "access-token": accessToken,
                     "refresh-token": refreshToken,
                 },
-            })
-            .then((res: any) => {
-                setIsLoading(false);
-                setCourseContentData(res.data.content);
-            })
-            .catch((error) => {
-                setIsLoading(false);
-                router.push("/(routes)/course-details");
             });
-    };
 
+            const content = response.data.content;
+            if (isValidJson(JSON.stringify(content))) {
+                setCourseContentData(content);
+            } else {
+                console.error("Received data is not valid JSON");
+                // Handle invalid JSON data here if needed
+            }
+        } catch (error) {
+            console.error("Error fetching course content:", error);
+            router.push("/(routes)/course-details");
+        } finally {
+            setIsLoading(false);
+        }
+    };
 
     const handleQuestionSubmit = async () => {
         const accessToken = await AsyncStorage.getItem("access_token");
@@ -643,82 +656,46 @@ export default function CourseAccessScreen() {
 
                     {activeButton === "About" && (
                         <View style={{ marginVertical: 25 }}>
-                            <Text style={{ fontSize: 18, fontWeight: "bold" }}>About Course</Text>
-                            <Text style={{ color: "#525258", fontSize: 16, marginTop: 10, textAlign: "justify" }}>
-                                {data?.description}
-                            </Text>
+                            <Text style={{ fontSize: 18, fontWeight: "bold", marginBottom: 10 }}>Course Content</Text>
+                            <Text>{courseContentData[activeVideo]?.description}</Text>
                         </View>
                     )}
 
                     {activeButton === "Q&A" && (
-                        <View style={{ marginVertical: 15 }}>
+                        <View style={{ marginVertical: 25 }}>
                             <TextInput
+                                style={styles.input}
+                                placeholder="Ask a question..."
                                 value={question}
                                 onChangeText={setQuestion}
-                                placeholder="Ask a question..."
-                                style={styles.textInput}
-                                multiline
                             />
-                            <TouchableOpacity
-                                style={styles.button}
-                                disabled={question === ""}
-                                onPress={handleQuestionSubmit}
-                            >
-                                <Text style={{ color: "#fff", fontSize: 18, fontWeight: "600" }}>Submit</Text>
+                            <TouchableOpacity style={styles.button} onPress={handleQuestionSubmit}>
+                                <Text style={{ color: "#fff", fontSize: 18, fontWeight: "600" }}>Submit Question</Text>
                             </TouchableOpacity>
-                            {courseContentData[activeVideo]?.questions
-                                ?.slice()
-                                .reverse()
-                                .map((item: CommentType, index: number) => (
-                                    <View key={index} style={{ marginVertical: 10 }}>
-                                        <Text style={{ fontWeight: "bold" }}>{item.questionText}</Text>
-                                        {item.questionImage && (
-                                            <Image
-                                                source={{ uri: item.questionImage.url }}
-                                                style={{ width: 100, height: 100, marginVertical: 10 }}
-                                            />
-                                        )}
-                                    </View>
-                                ))}
                         </View>
                     )}
 
                     {activeButton === "Reviews" && (
                         <View style={{ marginVertical: 25 }}>
-                            {!reviewAvailable && (
+                            {reviewAvailable ? (
+                                <Text>You have already reviewed this course.</Text>
+                            ) : (
                                 <View>
-                                    <Text style={{ fontSize: 18, paddingBottom: 10 }}>Give one rating:</Text>
-                                    <View style={{ flexDirection: "row" }}>{renderStars()}</View>
+                                    <Text style={{ fontSize: 18, fontWeight: "bold", marginBottom: 10 }}>Rate and Review</Text>
+                                    <View style={{ flexDirection: "row", marginBottom: 10 }}>
+                                        {renderStars()}
+                                    </View>
                                     <TextInput
+                                        style={styles.input}
+                                        placeholder="Write your review..."
                                         value={review}
                                         onChangeText={setReview}
-                                        placeholder="Give a review..."
-                                        style={styles.textInput}
-                                        multiline
                                     />
-                                    <TouchableOpacity
-                                        style={styles.button}
-                                        disabled={review === ""}
-                                        onPress={handleReviewSubmit}
-                                    >
-                                        <Text style={{ color: "#fff", fontSize: 18, fontWeight: "600" }}>Submit</Text>
+                                    <TouchableOpacity style={styles.button} onPress={handleReviewSubmit}>
+                                        <Text style={{ color: "#fff", fontSize: 18, fontWeight: "600" }}>Submit Review</Text>
                                     </TouchableOpacity>
                                 </View>
                             )}
-
-                            {data?.reviews?.map((item: any, index: number) => (
-                                <View key={index} style={{ marginVertical: 10 }}>
-                                    <Text style={{ fontWeight: "bold" }}>{item.user.name}</Text>
-                                    <View style={{ flexDirection: "row" }}>
-                                        {Array.from({ length: item.rating }).map((_, i) => (
-                                            <Text key={i} style={{ fontSize: 20, color: "#FF8D07" }}>
-                                                ★
-                                            </Text>
-                                        ))}
-                                    </View>
-                                    <Text style={{ marginTop: 5 }}>{item.review}</Text>
-                                </View>
-                            ))}
                         </View>
                     )}
                 </ScrollView>
@@ -732,36 +709,29 @@ const styles = StyleSheet.create({
         backgroundColor: "#FF8D07",
         padding: 10,
         borderRadius: 5,
-        alignItems: "center",
-        marginHorizontal: 5
     },
-    textInput: {
-        borderColor: "#ccc",
+    input: {
         borderWidth: 1,
+        borderColor: "#ddd",
         padding: 10,
         borderRadius: 5,
         marginBottom: 10,
-        maxHeight: 100
     },
     activeButton: {
         backgroundColor: "#FF8D07",
         padding: 10,
         borderRadius: 5,
-        marginHorizontal: 5
     },
     inactiveButton: {
-        backgroundColor: "#ccc",
+        backgroundColor: "#ddd",
         padding: 10,
         borderRadius: 5,
-        marginHorizontal: 5
     },
     activeText: {
         color: "#fff",
         fontWeight: "bold",
-        textAlign: "center"
     },
     inactiveText: {
         color: "#000",
-        textAlign: "center"
-    }
+    },
 });

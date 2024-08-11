@@ -26,6 +26,7 @@ export default function CourseDetailScreen() {
   const [isExpanded, setIsExpanded] = useState(false);
   const { item } = useLocalSearchParams();
   const courseData: CoursesType = JSON.parse(item as string);
+  
   const [checkPurchased, setCheckPurchased] = useState(false);
 
   useEffect(() => {
