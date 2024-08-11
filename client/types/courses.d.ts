@@ -63,6 +63,9 @@
 //   purchased: number;
 // };
 
+type ImageType = {
+  url: string;
+};
 
 type User = {
   _id: string;
@@ -80,12 +83,14 @@ type User = {
   passwordResetTokenExpire?: Date;  // Optional
 };
 
-
 type CommentType = {
   _id: string;
-  user: User;
-  question: string;
-  questionReplies: CommentType[];
+  questionText?: string; // This should be the text of the question
+  questionImage?: ImageType; // This should be an object with a URL
+  answerText?: string; // This should be the text of the answer
+  answerImage?: ImageType; // This should be an object with a URL
+  questionReplies: CommentType[]; // Replies to the question
+  videoUrl: string;
 };
 
 type ReviewType = {
