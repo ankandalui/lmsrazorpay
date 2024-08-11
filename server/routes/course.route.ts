@@ -120,6 +120,7 @@ courseRouter.delete(
   DeleteSubject
 );
 
+//get all subject 
 courseRouter.get(
   "/course/:courseId/year/:yearId/subjects",
   isAutheticated,
